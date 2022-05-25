@@ -1,5 +1,9 @@
-function App() {
-  return <h1>2</h1>;
-}
+import { SideBar } from './components/public/SideBar/index.component';
 
-export default App;
+export function App() {
+  return (
+    <>
+      <SideBar />
+    </>
+  );
+}
