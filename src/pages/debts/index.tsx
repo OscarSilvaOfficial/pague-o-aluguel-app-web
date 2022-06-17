@@ -20,6 +20,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { AddIcon } from "@chakra-ui/icons";
 import { FirebaseAdapter } from "../../services/index";
+// @ts-ignore
 import CurrencyInput from "react-currency-masked-input";
 
 interface Debit {
@@ -107,6 +108,7 @@ export function DebitsPage() {
         right="40px"
         onClick={onOpen}
       />
+      {/* @ts-ignore */}
       <AlertDialog isOpen={isOpen} onClose={onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
