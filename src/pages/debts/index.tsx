@@ -13,15 +13,31 @@ import {
   AlertDialogFooter,
   Button,
   useDisclosure,
+  FormControl,
+  FormLabel,
+  Input,
 } from "@chakra-ui/react";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AddIcon } from "@chakra-ui/icons";
+import { FirebaseAdapter } from "../../services/index";
+import CurrencyInput from "react-currency-masked-input";
+
+interface Debit {
+  id?: string;
+  title: string;
+  value: string;
+  dueDate: string;
+  installments: string;
+}
 
 export function DebitsPage() {
-  const [debits, setDebits] = useState(DEBITS_MOCK_DATA);
+  const [debits, setDebits] = useState<Debit[]>([]);
+  const [title, setTitle] = useState<string>("");
+  const [installments, setInstallment] = useState<string>("");
+  const [value, setValue] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const cancelRef = useRef()
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const CardStyles: BoxProps = {
     borderRadius: "5px",
@@ -45,17 +61,34 @@ export function DebitsPage() {
     fontSize: "14px",
   };
 
-  const convertDate = (date: number) => {
-    return new Date(date).toLocaleDateString("pt-BR");
+  const convertDate = (date: string) => {
+    return new Date(date).toLocaleDateString("pt-BR", { timeZone: "UTC" });
   };
+
+  const handleSubmit = useCallback(async () => {
+    const amount = parseFloat(value).toFixed(3);
+    const payload = {
+      title,
+      installments,
+      value: (Number(amount) * 10).toFixed(2).toString(),
+      dueDate,
+    };
+    await FirebaseAdapter.addDocumentOnCollection("debits", payload);
+    setDebits([...debits, payload]);
+    onClose();
+  }, [title, installments, value, dueDate]);
+
+  useEffect(() => {
+    FirebaseAdapter.getFirebaseCollection("debits").then(setDebits);
+  }, []);
 
   return (
     <Box w="100%" height="95vh" p={4} color="white">
       <Flex alignItems="center" justifyContent="space-between" wrap="wrap">
         {debits.map((debit, index) => (
           <Box {...CardStyles} _hover={CardHoverStyles} key={index}>
-            <Text as="h2">{debit.accountName}</Text>
-            <Text {...CardDescription}>Valor: {debit.value}</Text>
+            <Text as="h2">{debit.title}</Text>
+            <Text {...CardDescription}>Valor: R$ {debit.value}</Text>
             <Text {...CardDescription}>Parcelas: {debit.installments}</Text>
             <Text {...CardDescription}>
               Vencimento: {convertDate(debit.dueDate)}
@@ -74,26 +107,57 @@ export function DebitsPage() {
         right="40px"
         onClick={onOpen}
       />
-      <AlertDialog
-        isOpen={isOpen}
-        onClose={onClose}
-      >
+      <AlertDialog isOpen={isOpen} onClose={onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete Customer
+              Cadastro de conta
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure? You can't undo this action afterwards.
+              <form>
+                <FormControl>
+                  <FormLabel htmlFor="title">Título da conta</FormLabel>
+                  <Input
+                    id="title"
+                    type="text"
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl mt="14px">
+                  <FormLabel htmlFor="installments">Parcelas</FormLabel>
+                  <Input
+                    id="installments"
+                    type="text"
+                    onChange={(e) => setInstallment(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl mt="14px">
+                  <FormLabel htmlFor="value">Valor (R$)</FormLabel>
+                  <Input
+                    id="value"
+                    type="text"
+                    as={CurrencyInput}
+                    onChange={(e) => setValue(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl mt="14px">
+                  <FormLabel htmlFor="due-date">Data de vencimento</FormLabel>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </FormControl>
+              </form>
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button onClick={onClose}>
-                Cancel
+              <Button colorScheme="red" onClick={onClose}>
+                Fechar
               </Button>
-              <Button colorScheme="red" onClick={onClose} ml={3}>
-                Delete
+              <Button onClick={handleSubmit} ml={3}>
+                Criar
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
