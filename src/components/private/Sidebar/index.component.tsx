@@ -12,9 +12,7 @@ import {
 import { ArrowRightIcon, TriangleDownIcon, HamburgerIcon } from '@chakra-ui/icons'
 
 export function Sidebar() {
-  const { isOpen, onOpen, onClose } = useDisclosure({
-    defaultIsOpen: true,
-  });
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const TextColor="#000000"
 
